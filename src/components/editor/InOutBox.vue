@@ -1,17 +1,35 @@
 <template>
-  <div id="inoutbox" class="fsHide" v-bind:style="{ fontSize: this.$store.state.fontSize + 'px' }" v-show="this.$store.state.showInOutBox">
+  <div id="inoutbox" :class="{ verticalPane : this.$store.state.isVertical, resizable : !this.$store.state.isVertical}"
+    class="fsHide" v-bind:style="{ fontSize: this.$store.state.fontSize + 'px' }" v-show="this.$store.state.showInOutBox">
     <div class="panel-input panel-default">
       <div class="panel-heading">
         <span>Input</span>
         <label id="uploadInputFile" ><span class="fa fa-folder-open" style="margin-left: 5px" aria-hidden="true"></span>
           <input type="file" ref="inputFileUpload" style="display:none" @change="uploadInput">
         </label>
-        <a v-on:click="onCopyInput" id="copy-input"> 
+        <a v-on:click="onCopyInput" id="copy-input">
           <i class="fa fa-paperclip" />
         </a>
+        <button v-if="this.$store.state.isVertical" type="button" id="toggleHorizontalPane" class="btn btn-sm btn-menu"
+          :class="{ open : isOpen}" @click="open" @blur="close">
+          <i class="fa fa-ellipsis-v" aria-hidden="true" style="font-size:14px"></i>
+          <ul class="dropdown-menu">
+            <li>
+              <button type="button" class="btn btn-sm btn-menu" @click="shiftInOutBox">
+                <i class="fa fa-window-maximize fa-rotate-180" style="margin-right: 4px"></i>Dock to bottom
+              </button>
+            </li>
+            <li>
+              <button type="button" class="btn btn-sm btn-menu" @click="close">
+                <i class="fa fa-window-maximize fa-rotate-90" style="margin-right: 4px"></i>Dock to right
+                <i class="fa fa-check" aria-hidden="true"></i>
+              </button>
+            </li>
+          </ul>
+        </button>
       </div>
       <textarea class="textbox" id="test-input" rows="2" wrap="off"
-                placeholder="Specify Input" :value="this.$store.state.customInput"
+                placeholder="Enter Input" :value="this.$store.state.customInput"
                 @change="customInputChange">
       </textarea>
     </div>
@@ -21,9 +39,26 @@
         <button type="button" id="downloadOutput" class="btn btn-sm btn-menu" @click="downloadOutput()">
           <i class="fa fa-download" aria-hidden="true"></i>
         </button>
-        <a v-on:click="onCopyOutput" id="copy-output"> 
+        <a v-on:click="onCopyOutput" id="copy-output">
           <i class="fa fa-paperclip"/>
         </a>
+        <button v-if="!this.$store.state.isVertical" type="button" id="toggleVerticalPane" class="btn btn-sm btn-menu"
+          :class="{ open : isOpen}" @click="open" @blur="close">
+          <i class="fa fa-ellipsis-v" aria-hidden="true" style="font-size:14px"></i>
+          <ul class="dropdown-menu">
+            <li>
+              <button type="button" class="btn btn-sm btn-menu" @click="close">
+                <i class="fa fa-window-maximize fa-rotate-180" style="margin-right: 4px"></i>Dock to bottom
+                <i class="fa fa-check" aria-hidden="true"></i>
+              </button>
+            </li>
+            <li>
+              <button type="button" class="btn btn-sm btn-menu" @click="shiftInOutBox">
+                <i class="fa fa-window-maximize fa-rotate-90" style="margin-right: 4px"></i>Dock to right
+              </button>
+            </li>
+          </ul>
+        </button>
       </div>
       <pre id="output">{{this.$store.state.output}}</pre>
     </div>
@@ -34,8 +69,13 @@
   import * as download from 'downloadjs'
   export default {
     name: 'inoutbox',
+    data() {
+      return {
+        isOpen: false
+      }
+    },
     mounted() {
-      interact('#inoutbox')
+      interact('#inoutbox.resizable')
         .resizable({
           edges: { top: true },
           restrictEdges: {
@@ -63,6 +103,15 @@
       })
     },
     methods: {
+      shiftInOutBox() {
+        this.$store.commit('shiftInOutBox')
+      },
+      open() {
+        this.isOpen = !this.isOpen
+      },
+      close() {
+        setTimeout(() => { this.isOpen=false },250 )
+      },
       customInputChange(e) {
         this.$store.commit('changeCustomInput', e.target.value || e.target.result)
       },
@@ -124,10 +173,11 @@
   #inoutbox {
     position: fixed;
     width: 100vw;
-    height: 210px;
-    bottom: 0;
+    height: calc(30vh + 30px);
+    bottom: 20px;
     left: 0;
-    z-index: 20;
+    z-index: 10;
+    background: #202020;
   }
 
   #output, #test-input {
@@ -138,7 +188,7 @@
     overflow: auto;
     background: #202020 !important;
     border: none;
-    border-right: 1px solid #272727; 
+    border-right: 1px solid #272727;
     color: white !important;
   }
 
@@ -174,7 +224,15 @@
     right: 14px;
   }
 
+  #toggleVerticalPane {
+    display: none;
+  }
+
    @media (max-width: 767px) {
+    #toggleHorizontalPane {
+      display: none;
+    }
+
     .panel-heading, .panel-input, .panel-output, #output, #test-input {
       width: calc(100vw - 14px);
     }
@@ -186,16 +244,96 @@
     }
   }
 
+  @media (min-width: 767px) {
+    #toggleVerticalPane {
+      display: inline-block;
+    }
+
+    .verticalPane#inoutbox {
+      height: calc(100vh - 70px) !important;
+      width: 100vw;
+      position: relative;
+      right: 0;
+      left: 5px;
+      top: calc(-100vh + 65px);
+      z-index: 9;
+      left: 5px;
+    }
+
+    .verticalPane #output, .verticalPane #test-input {
+      width: calc(40vw - 5px);
+    }
+
+    .verticalPane .panel-heading, .verticalPane .panel-input, .verticalPane .panel-output {
+      width: calc(40vw + 4px);
+    }
+
+    .verticalPane .panel-input, .verticalPane .panel-output {
+      bottom: auto;
+      top: 0;
+      right: 0;
+      height: 50% !important;
+    }
+
+    .verticalPane .panel-output {
+      top: auto;
+      bottom: 0;
+    }
+  }
+
+  @media (min-width: 1375px) {
+    .verticalPane#inoutbox {
+      max-width: 550px;
+      left: calc(100vw - 550px);
+      bottom:0px;
+    }
+    .verticalPane #output, .verticalPane #test-input {
+      width: 100%;
+    }
+    .verticalPane .panel-heading, .verticalPane .panel-input, .verticalPane .panel-output {
+      width: 100%;
+    }
+  }
+
   i.fa:hover {
     cursor: pointer;
+    color: red;
+  }
+  i.fa:focus {
+    color: red;
+  }
+  span.fa:hover {
+    cursor: pointer;
+    color: red;
+  }
+  span.fa:focus {
+    color: red;
+  }
+
+  .open > .dropdown-menu {
+    display: list-item !important;
+    background-color: #202020;
+    font-size: 14px;
+    overflow: hidden;
+    top: 35px;
+    right: 25px;
+    left: auto;
+    width: 180px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   }
 
   #uploadInputFile{
     margin: 0px 0px 0px auto;
     padding: 0 10px;
     cursor: pointer;
-  } 
+  }
   #downloadOutput {
     margin-left: auto;
+  }
+</style>
+
+<style>
+  .vue-notification {
+    margin-top: 45px;
   }
 </style>

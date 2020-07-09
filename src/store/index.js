@@ -28,7 +28,12 @@ const extension = {
   py2: ".py",
   nodejs8: ".js",
   nodejs10: ".js",
-  jsv: ".js"
+  jsv: ".js",
+  csharp: ".cs",
+  py3: '.py',
+  ruby: '.rb',
+  kotlin: '.kt',
+  rust: '.rs',
 };
 
 export default new Vuex.Store({
@@ -46,20 +51,24 @@ export default new Vuex.Store({
     customInput: "",
     customInputBuf: "", //input buffer to store customInput when toggled OFF
     output: "",
-    fileName: "download.cpp",
+    fileName: `code`,
     isChanged: false,
     autoSave: true,
     autoSaveIntervalId: null,
     checkData: "",
     codeId: null,
-    codeTitle: "",
-    submissionId: null
+    codeTitle: ``,
+    submissionId: null,
+    isVertical: false
   },
   modules: {
     user: userModule,
     firebase: firebaseModule
   },
   mutations: {
+    shiftInOutBox(state) {
+      state.isVertical = !state.isVertical
+    },
     toggleInOutBox(state) {
       state.showInOutBox = !state.showInOutBox;
     },
@@ -68,7 +77,7 @@ export default new Vuex.Store({
     },
     changeLanguage(state, val) {
       state.language = val;
-      state.fileName = `download${extension[state.language]}`;
+      state.fileName = `${(state.fileName).split('.')[0]}${extension[val]}`;
     },
     updateCode(state, val) {
       state.code[state.language] = val;
@@ -92,7 +101,12 @@ export default new Vuex.Store({
       state.output = val;
     },
     fileNameChange(state, val) {
-      state.fileName = val;
+      state.fileName = `${val.split('.')[0]}${extension[state.language]}`
+      state.codeTitle = `${val.split('.')[0]}`
+    },
+    setCodeTitle(state, val) {
+      state.fileName = `${val.split('.')[0]}${extension[state.language]}`
+      state.codeTitle = `${val.split('.')[0]}`
     },
     changeCustomInput(state, val) {
       state.customInput = val;
@@ -130,9 +144,6 @@ export default new Vuex.Store({
     setCodeId(state, val) {
       state.codeId = val;
     },
-    setCodeTitle(state, val) {
-      state.codeTitle = val;
-    },
     setSubmissionId(state, val) {
       state.submissionId = val;
     }
@@ -141,7 +152,7 @@ export default new Vuex.Store({
     new VuexPersistence({
       storage: window.localStorage,
       reducer: function(state) {
-        const included = ["user", "showInOutBox", "showSettings", "font", "fontSize", "tabSize"];
+        const included = ["user", "showInOutBox", "isVertical", "showSettings", "font", "fontSize", "tabSize", "language"];
         console.log(state);
         return Object.keys(state)
           .filter(key => included.includes(key))

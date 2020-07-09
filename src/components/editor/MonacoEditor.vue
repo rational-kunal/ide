@@ -1,5 +1,5 @@
 <template>
-  <pre id="editor"></pre>
+  <pre id="editor" :class="{ verticalPane : this.$store.state.isVertical && this.$store.state.showInOutBox, editorFull : !this.$store.state.showInOutBox}"></pre>
 </template>
 
 <script>
@@ -9,14 +9,17 @@
   const langModes = {
     'c': 'c',
     'cpp': 'cpp',
-    'c#': 'csharp',
+    'csharp': 'csharp',
     'java8': 'java',
     'py2': 'python',
     'py3': 'python',
     'jsv': 'javascript',
     'nodejs8': 'javascript',
     'nodejs10': 'javascript',
-    'ruby': 'ruby'
+    'ruby': 'ruby',
+    'rust': 'rust',
+    'golang': 'go',
+    'kotlin': 'kotlin'
   }
 
   export default {
@@ -25,7 +28,7 @@
       addEventListener('dragover', this.dragOverHandler, false)
       addEventListener('drop', this.dropHandler, false)
 
-      this.editor = 
+      this.editor =
         monaco.editor.create(document.getElementById('editor'), {
           // value: this.$store.state.code[this.$store.state.language],
           minimap: {
@@ -86,13 +89,13 @@
               tabSize: this.$store.state.tabSize
             })
             break;
-          case "firebase/enablePairMode": 
+          case "firebase/enablePairMode":
             const value = this.editor.getValue()
             // need to clear editor before initializing firepad
             this.editor.setValue('')
             // setup firepad to track the editor now
             firepad.fromMonaco(this.$store.state.firebase.ref, this.editor)
-            
+
             if (mutation.payload && mutation.payload.keepText) {
               this.editor.setValue(value)
             }
@@ -158,14 +161,36 @@
     overflow: hidden;
     position: relative;
     border: none;
-    height: calc(100vh - 40px);
+    height: calc(70vh - 60px);
     width: 100vw;
     z-index: 10;
     margin: 0;
     border-radius: 0;
-    padding-top: 35px;
+    padding-top: 0!important;
+  }
+  .editorFull#editor{
+    height: calc(100vh - 60px);
+  }
+  @media (min-width: 767px) {
+    .verticalPane#editor {
+      width: 60vw;
+      height: calc(100vh - 60px);
+    }
+  }
+  @media (min-width: 1375px) {
+    .verticalPane#editor {
+      width: 100vw;
+      max-width: calc(100vw - 550px);
+      height: calc(100vh - 60px);
+    }
   }
   .inputarea {
     opacity: 0;
+  }
+</style>
+
+<style>
+  .vue-notification {
+    margin-top: 45px;
   }
 </style>
